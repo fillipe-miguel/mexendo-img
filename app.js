@@ -1,19 +1,34 @@
 const sharp = require('sharp');
 const compress_images = require('compress-images');
+const fs = require('fs');
 
 let path = process.argv[2];
 let width = Number(process.argv[3]);
 let new_name = process.argv[4];
+let rotate = Number(process.argv[5]);
 
 function resize(path, width, new_name) {
 	let output_path = `./temp/${new_name}.jpg`;
+	let output_path_rotate = `./temp/${new_name}_${rotate}.jpg`;
 	sharp(path)
 		.resize(width)
 		.toFile(output_path, (error) => {
 			if (error) throw error;
-			console.log(new_name);
-			compress(output_path, `./compressed/`);
-            
+			if (rotate) {
+				sharp(output_path)
+					.rotate(rotate)
+					.toFile(output_path_rotate, (err) => {
+						if (err) {
+							throw error;
+						}
+						compress(output_path_rotate, `./compressed/`);
+						delet(output_path_rotate);
+					});
+			} else if (!rotate) {
+				compress(output_path, `./compressed/`);
+			}
+
+			delet(output_path);
 		});
 }
 
@@ -40,6 +55,14 @@ function compress(input_path, output_path) {
 			console.log('-------------');
 		}
 	);
+}
+
+function delet(path) {
+	setTimeout(() => {
+		fs.unlink(path, (err) => {
+			if (err) throw err;
+		});
+	}, 300);
 }
 
 resize(path, width, new_name);
